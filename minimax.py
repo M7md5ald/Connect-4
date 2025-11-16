@@ -131,3 +131,49 @@ def minimax(board, depth, maximizing_player, utils):
                 min_eval = eval_score
                 best_col = col
         return min_eval, best_col
+
+# --------------------- (Alpha-Beta Pruning Minimax Algorithm) ---------------------
+
+def minimax_alpha_beta(board, depth, alpha, beta, maximizing_player, utils):
+    if utils.is_terminal(board, depth):
+        return utils.evaluate_board(board), None
+
+    valid_moves = board.get_valid_moves()
+
+    if maximizing_player:
+        max_eval = -math.inf
+        best_col = None
+        for col in valid_moves:
+            board.drop_piece(col, AI)
+            eval_score, _ = minimax_alpha_beta(board, depth - 1, alpha, beta, False, utils)
+            board.undo_move()
+
+            if eval_score > max_eval:
+                max_eval = eval_score
+                best_col = col
+
+            # Alpha-Beta update for maximizing player
+            alpha = max(alpha, eval_score)
+            if alpha >= beta:   # prune
+                break
+
+        return max_eval, best_col
+
+    else:
+        min_eval = math.inf
+        best_col = None
+        for col in valid_moves:
+            board.drop_piece(col, PLAYER)
+            eval_score, _ = minimax_alpha_beta(board, depth - 1, alpha, beta, True, utils)
+            board.undo_move()
+
+            if eval_score < min_eval:
+                min_eval = eval_score
+                best_col = col
+
+            # Alpha-Beta update for minimizing player
+            beta = min(beta, eval_score)
+            if beta <= alpha:   # prune
+                break
+
+        return min_eval, best_col
