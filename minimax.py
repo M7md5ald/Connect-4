@@ -6,14 +6,15 @@ AI = 2
 
 ROWS = 6
 COLS = 7
-WINDOW_LENGTH = 4 
+WINDOW_LENGTH = 4
 
 class MinimaxUtils:
     def __init__(self):
         pass
 
     def is_terminal(self, board, depth):
-        return depth == 0 or board.is_full() or self.check_win(board, PLAYER) or self.check_win(board, AI)
+        # FIXED: Use get_valid_moves() instead of is_full()
+        return depth == 0 or not board.get_valid_moves() or self.check_win(board, PLAYER) or self.check_win(board, AI)
 
     def evaluate_board(self, board):
         """Return heuristic score for the board with blocking priority."""
@@ -111,7 +112,7 @@ def minimax(board, depth, maximizing_player, utils):
 
     if maximizing_player:
         max_eval = -math.inf
-        best_col = None
+        best_col = valid_moves[0]
         for col in valid_moves:
             board.drop_piece(col, AI)
             eval_score, _ = minimax(board, depth - 1, False, utils)
@@ -122,7 +123,7 @@ def minimax(board, depth, maximizing_player, utils):
         return max_eval, best_col
     else:
         min_eval = math.inf
-        best_col = None
+        best_col = valid_moves[0]
         for col in valid_moves:
             board.drop_piece(col, PLAYER)
             eval_score, _ = minimax(board, depth - 1, True, utils)
@@ -142,7 +143,7 @@ def minimax_alpha_beta(board, depth, alpha, beta, maximizing_player, utils):
 
     if maximizing_player:
         max_eval = -math.inf
-        best_col = None
+        best_col = valid_moves[0]
         for col in valid_moves:
             board.drop_piece(col, AI)
             eval_score, _ = minimax_alpha_beta(board, depth - 1, alpha, beta, False, utils)
@@ -161,7 +162,7 @@ def minimax_alpha_beta(board, depth, alpha, beta, maximizing_player, utils):
 
     else:
         min_eval = math.inf
-        best_col = None
+        best_col = valid_moves[0]
         for col in valid_moves:
             board.drop_piece(col, PLAYER)
             eval_score, _ = minimax_alpha_beta(board, depth - 1, alpha, beta, True, utils)
