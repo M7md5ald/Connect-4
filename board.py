@@ -40,3 +40,6 @@ class Board:
             if self.is_valid_location(col):
                 moves.append(col)
         return moves
+    
+    def is_board_full(self):
+        return len(self.move_history) == rows * cols
