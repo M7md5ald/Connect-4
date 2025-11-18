@@ -1,8 +1,13 @@
 import tkinter as tk
 from tkinter import ttk, scrolledtext, messagebox
 from board import Board, empty, player, AI, rows, cols
-from minimax import MinimaxUtils, minimax, minimax_alpha_beta
+from MinimaxUtils import *
+from minimaxx import *
+from abPruning import *
+from expecti import *
 import time
+import sys
+from io import StringIO
 
 
 class Connect4GUI:
@@ -49,7 +54,7 @@ class Connect4GUI:
         board_frame = tk.Frame(top_frame, bg='#f0f0f0', relief=tk.RAISED, borderwidth=2)
         board_frame.pack(side=tk.LEFT, padx=(0, 10))
 
-        # Canvas for the board - FLIPPED: row 0 is now at bottom
+        # Canvas for the board
         canvas_width = cols * self.cell_size
         canvas_height = rows * self.cell_size
         self.canvas = tk.Canvas(
@@ -225,7 +230,7 @@ class Connect4GUI:
 
         terminal_label = tk.Label(
             terminal_frame,
-            text="Console Output:",
+            text="Console Output (Tree Visualization):",
             font=('Arial', 11, 'bold'),
             bg='white',
             anchor=tk.W
@@ -234,7 +239,7 @@ class Connect4GUI:
 
         self.terminal = scrolledtext.ScrolledText(
             terminal_frame,
-            height=8,
+            height=50,
             bg='#1e1e1e',
             fg='#00ff00',
             font=('Courier', 9),
@@ -246,9 +251,10 @@ class Connect4GUI:
         # Initial messages
         self.add_terminal_message("Welcome to Connect 4!")
         self.add_terminal_message("Select an algorithm and depth to start.")
+        self.add_terminal_message("Tree will be displayed in console for each AI move.")
 
     def draw_board(self):
-        """Draw the Connect 4 board with pieces - FIXED: bottom to top orientation"""
+        """Draw the Connect 4 board with pieces"""
         self.canvas.delete("all")
 
         # Draw grid and pieces
@@ -263,7 +269,7 @@ class Connect4GUI:
                 y_center = y1 + self.cell_size // 2
                 radius = self.cell_size // 2 - 5
 
-                # Get piece from board (using actual row index)
+                # Get piece from board
                 piece = self.board.board[row][col]
                 if piece == player:
                     color = self.RED
@@ -302,7 +308,7 @@ class Connect4GUI:
             self.canvas.config(cursor="")
 
     def count_fours(self, piece):
-        """Count the number of connect-4s for a given piece using your utils"""
+        """Count the number of connect-4s for a given piece"""
         count = 0
 
         # Horizontal
@@ -338,13 +344,11 @@ class Connect4GUI:
         self.score_label.config(text=f"Human: {self.player_fours} | AI: {self.ai_fours}")
 
     def check_game_over(self):
-        """Check if game is over (board full) and determine winner"""
-        # Check if board is full
+        """Check if game is over and determine winner"""
         if not self.board.get_valid_moves():
             self.game_over = True
             self.update_scores()
 
-            # Determine winner
             if self.player_fours > self.ai_fours:
                 winner = "Human Wins!"
                 color = self.RED
@@ -364,7 +368,6 @@ class Connect4GUI:
             self.add_terminal_message(f"Result: {winner}")
             self.add_terminal_message("=" * 50)
 
-            # Show popup
             messagebox.showinfo("Game Over",
                                 f"{winner}\n\nFinal Score:\nHuman: {self.player_fours} Connect-4s\nAI: {self.ai_fours} Connect-4s")
 
@@ -372,18 +375,15 @@ class Connect4GUI:
         return False
 
     def make_move(self, col):
-        """Make a move on the board using your Board class methods"""
-        # Use your Board class's drop_piece method
+        """Make a move on the board"""
         self.board.drop_piece(col, self.current_player)
         self.draw_board()
 
         player_name = "Human (Red)" if self.current_player == player else "AI (Yellow)"
         self.add_terminal_message(f"{player_name} moved in column {col}")
 
-        # Update scores after each move
         self.update_scores()
 
-        # Check if game is over
         if self.check_game_over():
             return
 
@@ -391,26 +391,24 @@ class Connect4GUI:
         self.current_player = AI if self.current_player == player else player
         self.update_turn_label()
 
-        # Trigger AI move if it's AI's turn
+        # Trigger AI move
         if self.current_player == AI and not self.game_over:
             self.root.after(500, self.ai_move)
 
     def ai_move(self):
-        """Execute AI move using your minimax implementations"""
-        # Check if there are actually valid moves
+        """Execute AI move with tree visualization"""
         valid_moves = self.board.get_valid_moves()
         if not valid_moves:
             self.add_terminal_message("ERROR: No valid moves available!")
             self.check_game_over()
             return
 
-        self.add_terminal_message("AI is thinking...")
-        self.root.update()  # Force GUI update to show message
+        self.add_terminal_message("\n" + "🤖 AI is thinking...")
+        self.root.update()
 
         algo = self.selected_algorithm.get()
         depth = self.depth.get()
 
-        # Warn if depth is high
         if depth > 6:
             self.add_terminal_message(f"⚠️ Depth {depth} may take a long time...")
             self.root.update()
@@ -418,38 +416,50 @@ class Connect4GUI:
         start_time = time.time()
 
         try:
+            # Capture tree output
+            old_stdout = sys.stdout
+            sys.stdout = StringIO()
+            
+          
             if algo == "minimax":
-                score, col = minimax(self.board, depth, True, self.utils)
+                score, col, nodes = minimax_with_tree(self.board, depth, True, self.utils)
+                self.add_terminal_message(f"Nodes explored: {nodes}")
             elif algo == "alpha_beta":
-                score, col = minimax_alpha_beta(self.board, depth, float('-inf'), float('inf'), True, self.utils)
+                score, col, nodes = alpha_beta_with_tree(self.board, depth, float('-inf'), float('inf'), True, self.utils)
+                self.add_terminal_message(f"Nodes explored: {nodes}")
             else:  # expectiminimax
-                # TODO: Implement expectiminimax when ready
-                self.add_terminal_message("Expectiminimax not yet implemented, using Alpha-Beta")
-                score, col = minimax_alpha_beta(self.board, depth, float('-inf'), float('inf'), True, self.utils)
-
+                score, col = expecti_with_tree(self.board, depth, True, self.utils)
+                self.add_terminal_message(f"Nodes explored: {nodes}")
+            # Get captured output
+            tree_output = sys.stdout.getvalue()
+            sys.stdout = old_stdout
+            
+            # Display tree in terminal
+            self.add_terminal_message(tree_output)
+            
             end_time = time.time()
             elapsed = end_time - start_time
 
             if col is not None and col in valid_moves:
-                self.add_terminal_message(f"AI chose column {col} (score: {score})")
-                self.add_terminal_message(f"Time taken: {elapsed:.4f} seconds")
+                self.add_terminal_message(f"\n✅ AI chose column {col} (score: {score:.2f})")
+                self.add_terminal_message(f"⏱️ Time taken: {elapsed:.4f} seconds")
+                self.add_terminal_message("")
                 self.make_move(col)
             else:
                 self.add_terminal_message(f"ERROR: AI returned invalid column: {col}")
-                self.add_terminal_message(f"Valid moves were: {valid_moves}")
-                # Try to make a random valid move as fallback
                 import random
                 fallback_col = random.choice(valid_moves)
                 self.add_terminal_message(f"Making random fallback move: column {fallback_col}")
                 self.make_move(fallback_col)
 
         except RecursionError:
-            self.add_terminal_message("ERROR: Recursion limit reached! Depth too high.")
-            self.add_terminal_message("Try reducing the search depth.")
+            sys.stdout = old_stdout
+            self.add_terminal_message("ERROR: Recursion limit reached! Reduce depth.")
         except MemoryError:
-            self.add_terminal_message("ERROR: Out of memory! Depth too high.")
-            self.add_terminal_message("Try reducing the search depth.")
+            sys.stdout = old_stdout
+            self.add_terminal_message("ERROR: Out of memory! Reduce depth.")
         except Exception as e:
+            sys.stdout = old_stdout
             self.add_terminal_message(f"ERROR: {str(e)}")
             import traceback
             self.add_terminal_message(traceback.format_exc())
@@ -462,7 +472,7 @@ class Connect4GUI:
             self.update_turn_label()
             algo_name = self.selected_algorithm.get()
             self.add_terminal_message("=" * 50)
-            self.add_terminal_message(f"Game started!")
+            self.add_terminal_message(f"🎮 Game started!")
             self.add_terminal_message(f"Algorithm: {algo_name}")
             self.add_terminal_message(f"Search Depth: {self.depth.get()}")
             self.add_terminal_message("=" * 50)
@@ -480,7 +490,7 @@ class Connect4GUI:
         self.score_label.config(text="Human: 0 | AI: 0")
         self.draw_board()
         self.add_terminal_message("=" * 50)
-        self.add_terminal_message("Game reset!")
+        self.add_terminal_message("🔄 Game reset!")
         self.add_terminal_message("=" * 50)
 
     def update_turn_label(self):

@@ -44,3 +44,14 @@ class Board:
     def is_board_full(self):
         return len(self.move_history) == rows * cols
 
+    def is_full(self):
+        for row in self.board:
+            if empty in row:  # 0 means empty
+                return False
+        return True
+    def copy(self):
+        new_board = Board()
+        new_board.board = [row[:] for row in self.board]
+        new_board.column_heights = self.column_heights[:]
+        new_board.move_history = self.move_history[:]
+        return new_board
