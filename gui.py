@@ -1,7 +1,12 @@
 import tkinter as tk
 from tkinter import ttk, scrolledtext, messagebox
 from board import Board, empty, player, AI, rows, cols
-from board import MinimaxUtils, minimax, minimax_alpha_beta, expectiminimax , minimax_with_tree, alpha_beta_with_tree
+from board import *
+from MinimaxUtils import *
+from minimax import *
+from abPruning import *
+from expectiminimax import *
+from TreeNode import *
 import time
 import sys
 from io import StringIO
