@@ -13,8 +13,8 @@ class MinimaxUtils:
         pass
 
     def is_terminal(self, board, depth):
-        # FIXED: Use get_valid_moves() instead of is_full()
-        return depth == 0 or not board.get_valid_moves() or self.check_win(board, PLAYER) or self.check_win(board, AI)
+        return depth == 0 or board.is_full() #or self.check_win(board, PLAYER) or self.check_win(board, AI)
+
 
     def evaluate_board(self, board):
         """Return heuristic score for the board with blocking priority."""
@@ -23,10 +23,10 @@ class MinimaxUtils:
         # Score center column higher
         center_col = COLS // 2
         center_count = sum(1 for r in range(ROWS) if board.board[r][center_col] == AI)
-        score += center_count * 3
+        score += center_count * 3 #more piority for center
 
         # Score all windows
-        score += self.score_position(board, AI)
+        score += self.score_position(board, AI)  #calculates the score for all horizontal, vertical, and diagonal sequences.
         score -= self.score_position(board, PLAYER)  # subtract opponent potential
         return score
 
