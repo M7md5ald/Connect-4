@@ -128,7 +128,12 @@ def _calculate_expected_value_tree(board, depth, chosen_col, utils, current_dept
     
     chance_node.score = total_expected_value
     return total_expected_value, chance_node
-def expecti_with_tree(board, depth, is_ai_turn, utils, indent_level=0, col_played=None, prob=1.0):
+# Replace both functions with these versions
+
+def expecti_with_tree(board, depth, is_ai_turn, utils, indent_level=0, col_played=None, prob=1.0, node_counter=None):
+    if node_counter is None:
+        node_counter = [0]  # mutable counter
+
     indent = "  " * indent_level
 
     # Root display
@@ -136,6 +141,9 @@ def expecti_with_tree(board, depth, is_ai_turn, utils, indent_level=0, col_playe
         print("\n" + "="*70)
         print("EXPECTIMINIMAX TREE VISUALIZATION")
         print("="*70)
+
+    # increment node count for this node
+    node_counter[0] += 1
 
     # Node type
     if is_ai_turn:
@@ -154,7 +162,7 @@ def expecti_with_tree(board, depth, is_ai_turn, utils, indent_level=0, col_playe
     if depth == 0 or board.is_full():
         score = utils.evaluate_board(board)
         print(f"{indent}└─ LEAF: Score = {score:.2f}")
-        return score, None
+        return score, None, node_counter[0]
 
     valid_moves = board.get_valid_moves()
 
@@ -171,8 +179,8 @@ def expecti_with_tree(board, depth, is_ai_turn, utils, indent_level=0, col_playe
             print(f"{indent}│")
             print(f"{indent}├─► Trying column {col} ({i+1}/{len(valid_moves)}) → CHANCE NODE")
 
-            expected_value = evaluate_chance_node_with_tree(
-                board, depth, col, utils, indent_level + 1
+            expected_value, _, _ = evaluate_chance_node_with_tree(
+                board, depth, col, utils, indent_level + 1, node_counter
             )
 
             print(f"{indent}│  ← Expected value from CHANCE({col}) = {expected_value:.2f}")
@@ -182,7 +190,7 @@ def expecti_with_tree(board, depth, is_ai_turn, utils, indent_level=0, col_playe
                 best_col = col
 
         print(f"{indent}└─ MAX chooses col {best_col} | Score: {best_val:.2f}")
-        return best_val, best_col
+        return best_val, best_col, node_counter[0]
 
     # ----------------------------
     # MIN NODE (Human)
@@ -199,7 +207,7 @@ def expecti_with_tree(board, depth, is_ai_turn, utils, indent_level=0, col_playe
 
             board.drop_piece(col, PLAYER)
 
-            val, _ = expecti_with_tree(board, depth - 1, True, utils, indent_level + 1, col)
+            val, _, _ = expecti_with_tree(board, depth - 1, True, utils, indent_level + 1, col, 1.0, node_counter)
 
             board.undo_move()
 
@@ -210,19 +218,21 @@ def expecti_with_tree(board, depth, is_ai_turn, utils, indent_level=0, col_playe
                 best_col = col
 
         print(f"{indent}└─ MIN chooses col {best_col} | Score: {best_val:.2f}")
-        return best_val, best_col
+        return best_val, best_col, node_counter[0]
 
 
 # -----------------------------------------------------
-# CHANCE NODE HANDLER
+# CHANCE NODE HANDLER (now returns (expected_value, _, nodes))
 # -----------------------------------------------------
-def evaluate_chance_node_with_tree(board, depth, chosen_col, utils, indent_level):
+def evaluate_chance_node_with_tree(board, depth, chosen_col, utils, indent_level, node_counter):
     indent = "  " * indent_level
+
+    # increment for chance node itself
+    node_counter[0] += 1
 
     print(f"{indent}┌─ CHANCE Node at Level {indent_level} | For chosen col = {chosen_col}")
 
     outcomes = []
-    total = 0
 
     # Check neighbors
     left_valid = chosen_col > 0 and board.is_valid_location(chosen_col - 1)
@@ -261,8 +271,8 @@ def evaluate_chance_node_with_tree(board, depth, chosen_col, utils, indent_level
 
         board.drop_piece(landing_col, AI)
 
-        val, _ = expecti_with_tree(
-            board, depth - 1, False, utils, indent_level + 1, landing_col, prob
+        val, _, _ = expecti_with_tree(
+            board, depth - 1, False, utils, indent_level + 1, landing_col, prob, node_counter
         )
 
         board.undo_move()
@@ -273,4 +283,4 @@ def evaluate_chance_node_with_tree(board, depth, chosen_col, utils, indent_level
 
     print(f"{indent}└─ CHANCE aggregated value = {expected_value:.2f}")
 
-    return expected_value
+    return expected_value, None, node_counter[0]

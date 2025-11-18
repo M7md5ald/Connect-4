@@ -428,7 +428,7 @@ class Connect4GUI:
                 score, col, nodes = alpha_beta_with_tree(self.board, depth, float('-inf'), float('inf'), True, self.utils)
                 self.add_terminal_message(f"Nodes explored: {nodes}")
             else:  # expectiminimax
-                score, col , nodes = expecti_with_tree(self.board, depth, True, self.utils)
+                score, col = expecti_with_tree(self.board, depth, True, self.utils)
                 self.add_terminal_message(f"Nodes explored: {nodes}")
             # Get captured output
             tree_output = sys.stdout.getvalue()
