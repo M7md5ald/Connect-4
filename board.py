@@ -25,11 +25,6 @@ rows = 6
 cols = 7
 WINDOW_LENGTH = 4
 
-# Expectiminimax probabilities
-PROB_CHOSEN = 0.6
-PROB_NEIGHBOR = 0.2
-PROB_EDGE_NEIGHBOR = 0.4
-
 
 class Board:
     """Bitboard representation using two 42-bit integers"""

@@ -9,6 +9,13 @@ AI = 2
 rows = 6
 cols = 7
 WINDOW_LENGTH = 4
+def print_bitboard(board_obj, indent=""):
+    """Print the board (2D array) in a readable format"""
+    symbol_map = {empty: ".", player: "R", AI: "Y"}
+    for row in reversed(board_obj.board):  # print top row last for Connect 4 style
+        print(indent + " ".join(symbol_map[cell] for cell in row))
+    print(indent + "-" * (2 * cols - 1))
+
 def minimax_with_tree(board, depth, is_maximizing, utils, indent_level=0, col_played=None):
     """Minimax algorithm with tree visualization and transposition table"""
     indent = "  " * indent_level
@@ -34,7 +41,7 @@ def minimax_with_tree(board, depth, is_maximizing, utils, indent_level=0, col_pl
     
     player_type = "MAX (AI)" if is_maximizing else "MIN (Human)"
     print(f"\n{indent}┌─ Level {indent_level} | {player_type} | Col: {col_played if col_played is not None else 'ROOT'}")
-    
+    print_bitboard(board, indent + "│  ")
     valid_moves = board.get_valid_moves()
     
     if depth == 0 or not valid_moves:
