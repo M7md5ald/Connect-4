@@ -38,7 +38,7 @@ def alpha_beta_with_tree(board, depth, alpha, beta, is_maximizing, utils, indent
     player_type = "MAX (AI)" if is_maximizing else "MIN (Human)"
     print(f"\n{indent}┌─ Level {indent_level} | {player_type} | Col: {col_played if col_played is not None else 'ROOT'}")
     print(f"{indent}│  α={alpha:.2f}, β={beta:.2f}")
-    
+    board.print_bitboard( indent + "│  ")
     valid_moves = board.get_valid_moves()
     
     if depth == 0 or not valid_moves:

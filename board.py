@@ -16,6 +16,7 @@ Each player has their own bitboard:
 
 import math
 import random
+from textwrap import indent
 
 empty = 0
 player = 1
@@ -121,3 +122,9 @@ class Board:
             for col in range(cols):
                 grid[row][col] = self.get_piece(row, col)
         return grid
+    def print_bitboard(board_obj, indent=""):
+         """Print the board (2D array) in a readable format"""
+         symbol_map = {empty: ".", player: "R", AI: "Y"}
+         for row in reversed(board_obj.board):  # print top row last for Connect 4 style
+            print(indent + " ".join(symbol_map[cell] for cell in row))
+         print(indent + "-" * (2 * cols - 1))
