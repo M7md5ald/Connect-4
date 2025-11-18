@@ -43,3 +43,4 @@ class Board:
     
     def is_board_full(self):
         return len(self.move_history) == rows * cols
+
